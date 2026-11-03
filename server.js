@@ -11,7 +11,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // --- Accès ---------------------------------------------------------------------
 // Mot de passe obligatoire : l'appli est sur Internet. Un cookie garde la session un an.
-// Les autres applis (Repax, Argenx) ne passent pas par ici : elles lisent la base Notion « Présence ».
+// Les autres applis ne passent pas par ici : Repax lit directement la base Notion « Présence ».
 const MOT_DE_PASSE = process.env.APP_PASSWORD;
 if (!MOT_DE_PASSE) throw new Error('APP_PASSWORD manquant : choisis un mot de passe (ex. APP_PASSWORD=... npm start).');
 const signer = (s) => crypto.createHmac('sha256', s).update('agendix').digest('hex');

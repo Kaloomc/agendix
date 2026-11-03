@@ -47,7 +47,7 @@ L'API d'Agendix ne sert qu'à sa propre interface : aucune autre appli ne l'appe
 ## Notion : la base partagée
 
 Tout passe par Notion. Agendix utilise **le même jeton et la même page Notion que Repax** (`NOTION_TOKEN`, `NOTION_PAGE_ID`) et y range une base **« Présence »**, créée toute seule à côté des bases de Repax.
-Repax et Argenx lisent cette base directement dans Notion pour savoir où tu es ; ils ne parlent pas à Agendix.
+Repax lit cette base directement dans Notion pour savoir où tu es ; il ne parle pas à Agendix. Argenx partage la même page pour ses propres bases.
 
 Colonnes :
 

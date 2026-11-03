@@ -14,7 +14,7 @@ services:
       # Mot de passe demandé une fois sur chaque téléphone (obligatoire : sans lui l'appli refuse de démarrer)
       - APP_PASSWORD=
       # Mêmes valeurs que Repax : la base « Présence » est rangée dans la même page Notion,
-      # c'est là que Repax et Argenx lisent où tu es (vide = mode démo, invisible pour Repax)
+      # c'est là que Repax lit où tu es (vide = mode démo, invisible pour Repax)
       - NOTION_TOKEN=
       - NOTION_PAGE_ID=
     volumes:
