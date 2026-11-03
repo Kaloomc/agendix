@@ -1,0 +1,85 @@
+// Vérifications rapides : npm test
+const test = require('node:test');
+const assert = require('node:assert');
+const { creneaux, LIEUX } = require('./presence');
+
+process.env.APP_PASSWORD = 'mot-de-passe-test';
+process.env.CLE_INTERNE = 'cle-test';
+delete process.env.NOTION_TOKEN;
+const app = require('./server');
+
+const lieux = (c) => c.map((x) => `${x.date.slice(8)} ${x.moment} ${{ Angoulême: 'A', Parents: 'P', Ailleurs: 'X' }[x.lieu]}`);
+
+test('sans période : lieu par défaut partout', () => {
+  assert.deepStrictEqual(lieux(creneaux([], 'Angoulême', '2026-11-20', '2026-11-21')), [
+    '20 midi A', '20 soir A', '21 midi A', '21 soir A',
+  ]);
+});
+
+test('bornes midi/soir incluses', () => {
+  // Parents du jeudi 20 soir au dimanche 23 midi
+  const p = [{ du: '2026-11-20', duMoment: 'soir', au: '2026-11-23', auMoment: 'midi', lieu: 'Parents', ordre: 1 }];
+  assert.deepStrictEqual(lieux(creneaux(p, 'Angoulême', '2026-11-20', '2026-11-23')), [
+    '20 midi A', '20 soir P', '21 midi P', '21 soir P', '22 midi P', '22 soir P', '23 midi P', '23 soir A',
+  ]);
+});
+
+test('périodes qui se chevauchent : la plus récente l’emporte', () => {
+  const parents = { du: '2026-11-20', duMoment: 'midi', au: '2026-11-22', auMoment: 'soir', lieu: 'Parents', ordre: 1 };
+  const ailleurs = { du: '2026-11-21', duMoment: 'soir', au: '2026-11-21', auMoment: 'soir', lieu: 'Ailleurs', ordre: 2 };
+  const attendu = ['20 midi P', '20 soir P', '21 midi P', '21 soir X', '22 midi P', '22 soir P'];
+  // L'ordre dans la liste ne compte pas, seul « ordre » (création) compte.
+  assert.deepStrictEqual(lieux(creneaux([parents, ailleurs], 'Angoulême', '2026-11-20', '2026-11-22')), attendu);
+  assert.deepStrictEqual(lieux(creneaux([ailleurs, parents], 'Angoulême', '2026-11-20', '2026-11-22')), attendu);
+  // Si la longue période est la plus récente, elle recouvre l'autre.
+  assert.ok(creneaux([{ ...parents, ordre: 3 }, ailleurs], 'Angoulême', '2026-11-21', '2026-11-21').every((c) => c.lieu === 'Parents'));
+});
+
+test('période qui déborde de la plage demandée, et changement de mois', () => {
+  const p = [{ du: '2026-10-25', duMoment: 'midi', au: '2026-12-02', auMoment: 'midi', lieu: 'Ailleurs', ordre: 1 }];
+  assert.deepStrictEqual(lieux(creneaux(p, 'Parents', '2026-11-30', '2026-12-02')), [
+    '30 midi X', '30 soir X', '01 midi X', '01 soir X', '02 midi X', '02 soir P',
+  ]);
+});
+
+// --- HTTP ----------------------------------------------------------------------
+let serveur, base;
+test.before(() => new Promise((ok) => {
+  serveur = app.listen(0, () => {
+    base = `http://localhost:${serveur.address().port}`;
+    ok();
+  });
+}));
+test.after(() => serveur.close());
+
+const presence = (entetes = {}) => fetch(`${base}/api/presence?du=2026-11-30&au=2026-12-02`, { headers: entetes });
+
+test('en-tête X-Cle-Interne : bonne clé acceptée, mauvaise ou absente refusée', async () => {
+  assert.strictEqual((await presence({ 'X-Cle-Interne': 'cle-test' })).status, 200);
+  assert.strictEqual((await presence({ 'X-Cle-Interne': 'mauvaise' })).status, 401);
+  assert.strictEqual((await presence({ 'X-Cle-Interne': '' })).status, 401);
+  assert.strictEqual((await presence()).status, 401);
+});
+
+test('connexion par mot de passe puis cookie', async () => {
+  const non = await fetch(`${base}/api/connexion`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"motDePasse":"faux"}' });
+  assert.strictEqual(non.status, 401);
+  const oui = await fetch(`${base}/api/connexion`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"motDePasse":"mot-de-passe-test"}' });
+  const cookie = oui.headers.get('set-cookie').split(';')[0];
+  assert.strictEqual((await presence({ Cookie: cookie })).status, 200);
+});
+
+test('format exact de /api/presence (utilisé par Repax)', async () => {
+  const r = await (await presence({ 'X-Cle-Interne': 'cle-test' })).json();
+  assert.deepStrictEqual(Object.keys(r), ['lieuParDefaut', 'creneaux']);
+  assert.ok(LIEUX.includes(r.lieuParDefaut));
+  assert.deepStrictEqual(r.creneaux.map((c) => `${c.date} ${c.moment}`), [
+    '2026-11-30 midi', '2026-11-30 soir', '2026-12-01 midi', '2026-12-01 soir', '2026-12-02 midi', '2026-12-02 soir',
+  ]);
+  for (const c of r.creneaux) {
+    assert.deepStrictEqual(Object.keys(c), ['date', 'moment', 'lieu']);
+    assert.ok(LIEUX.includes(c.lieu));
+  }
+  const mauvais = await fetch(`${base}/api/presence?du=2026-12-02&au=2026-11-30`, { headers: { 'X-Cle-Interne': 'cle-test' } });
+  assert.strictEqual(mauvais.status, 400);
+});

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Agendix</title>
+  <meta name="theme-color" content="#5e35b1">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Agendix">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Agendix</h1>
+    <span id="mode" class="badge" hidden>Mode démo</span>
+  </header>
+
+  <main>
+    <section id="connexion">
+      <h2>Connexion</h2>
+      <form id="form-connexion" class="carte">
+        <label>Mot de passe
+          <input name="motDePasse" type="password" autocomplete="current-password" required>
+        </label>
+        <button type="submit">Entrer</button>
+        <p class="message" role="status"></p>
+      </form>
+    </section>
+
+    <section id="calendrier">
+      <div class="ligne-titre">
+        <button id="mois-avant" class="petit fleche" aria-label="Mois précédent">‹</button>
+        <h2 id="titre-mois"></h2>
+        <button id="mois-apres" class="petit fleche" aria-label="Mois suivant">›</button>
+      </div>
+      <div class="legende">
+        <span><i class="angouleme"></i>🏠 Angoulême</span>
+        <span><i class="parents"></i>👨‍👩‍👦 Parents</span>
+        <span><i class="ailleurs"></i>✈️ Ailleurs</span>
+      </div>
+      <div class="grille entetes"><span>lun</span><span>mar</span><span>mer</span><span>jeu</span><span>ven</span><span>sam</span><span>dim</span></div>
+      <div id="jours" class="grille"></div>
+      <p class="aide">Chaque jour : le haut, c'est le midi ; le bas, le soir. Touche un jour pour changer où tu es.</p>
+    </section>
+
+    <section id="periodes">
+      <h2>Nouvelle période</h2>
+      <form id="form-periode" class="carte">
+        <div class="deux">
+          <label>Du <input name="du" type="date" required></label>
+          <label>&nbsp;<select name="duMoment"><option value="midi">midi</option><option value="soir">soir</option></select></label>
+        </div>
+        <div class="deux">
+          <label>Au <input name="au" type="date" required></label>
+          <label>&nbsp;<select name="auMoment"><option value="midi">midi</option><option value="soir" selected>soir</option></select></label>
+        </div>
+        <fieldset class="lieux">
+          <legend>Je serai</legend>
+          <label><input type="radio" name="lieu" value="Angoulême" required> 🏠 Angoulême</label>
+          <label><input type="radio" name="lieu" value="Parents" checked> 👨‍👩‍👦 Parents</label>
+          <label><input type="radio" name="lieu" value="Ailleurs"> ✈️ Ailleurs</label>
+        </fieldset>
+        <label>Note <input name="note" maxlength="200" placeholder="week-end chez les parents, vacances…"></label>
+        <button type="submit">Ajouter la période</button>
+        <p class="message" role="status"></p>
+      </form>
+
+      <h3>Périodes à venir</h3>
+      <ul id="liste-periodes" class="liste"></ul>
+    </section>
+
+    <section id="reglages">
+      <h2>Réglages</h2>
+      <form id="form-reglages" class="carte">
+        <label>Quand rien n'est prévu, je suis
+          <select name="lieuParDefaut">
+            <option value="Angoulême">🏠 Angoulême</option>
+            <option value="Parents">👨‍👩‍👦 Parents</option>
+            <option value="Ailleurs">✈️ Ailleurs</option>
+          </select>
+        </label>
+        <button type="submit">Enregistrer</button>
+        <p class="message" role="status"></p>
+      </form>
+      <p class="aide">Repax (les repas) lit cet agenda : il ne prévoit des repas que pour les créneaux à 🏠 Angoulême.</p>
+    </section>
+  </main>
+
+  <dialog id="dialogue-jour">
+    <form method="dialog" id="form-jour">
+      <h2 id="titre-jour"></h2>
+      <fieldset class="lieux">
+        <legend>Midi</legend>
+        <label><input type="radio" name="midi" value="Angoulême"> <span>🏠<br>Angoulême</span></label>
+        <label><input type="radio" name="midi" value="Parents"> <span>👨‍👩‍👦<br>Parents</span></label>
+        <label><input type="radio" name="midi" value="Ailleurs"> <span>✈️<br>Ailleurs</span></label>
+      </fieldset>
+      <fieldset class="lieux">
+        <legend>Soir</legend>
+        <label><input type="radio" name="soir" value="Angoulême"> <span>🏠<br>Angoulême</span></label>
+        <label><input type="radio" name="soir" value="Parents"> <span>👨‍👩‍👦<br>Parents</span></label>
+        <label><input type="radio" name="soir" value="Ailleurs"> <span>✈️<br>Ailleurs</span></label>
+      </fieldset>
+      <div class="deux">
+        <button value="annuler" class="secondaire" formnovalidate>Annuler</button>
+        <button value="ok">Enregistrer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <nav>
+    <a href="#calendrier">📅<span>Calendrier</span></a>
+    <a href="#periodes">🧳<span>Périodes</span></a>
+    <a href="#reglages">⚙️<span>Réglages</span></a>
+  </nav>
+
+  <script src="app.js"></script>
+</body>
+</html>

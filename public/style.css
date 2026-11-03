@@ -1,0 +1,144 @@
+:root {
+  --theme: #5e35b1;
+  --fond: #f6f5f9;
+  --carte: #ffffff;
+  --texte: #1c1b1f;
+  --doux: #625f6b;
+  --bord: #dedbe6;
+  --rouge: #c62828;
+  --angouleme: #2e7d32;
+  --parents: #ef6c00;
+  --ailleurs: #1e88e5;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --theme: #9575cd;
+    --fond: #131217;
+    --carte: #1e1c24;
+    --texte: #e9e7ee;
+    --doux: #a29fab;
+    --bord: #33303b;
+    --rouge: #ef5350;
+    --angouleme: #43a047;
+    --parents: #fb8c00;
+    --ailleurs: #42a5f5;
+  }
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--fond);
+  color: var(--texte);
+}
+
+header {
+  position: sticky; top: 0; z-index: 1;
+  display: flex; align-items: center; gap: 8px;
+  padding: calc(env(safe-area-inset-top) + 12px) 16px 12px;
+  background: #5e35b1; color: #fff;
+}
+header h1 { margin: 0; font-size: 1.25rem; }
+.badge { font-size: .75rem; padding: 2px 8px; border-radius: 99px; background: rgba(255,255,255,.2); }
+
+main { max-width: 640px; margin: 0 auto; padding: 16px 16px calc(env(safe-area-inset-bottom) + 88px); }
+section { display: none; }
+section.active { display: block; }
+h2 { margin: 0 0 12px; font-size: 1.3rem; }
+h3 { margin: 20px 0 8px; font-size: 1rem; color: var(--doux); }
+.vide, .aide { color: var(--doux); }
+.aide { font-size: .875rem; margin: 12px 0 0; }
+.message { margin: 0; min-height: 1.5em; color: var(--doux); }
+small { color: var(--doux); font-weight: 400; }
+
+.carte {
+  background: var(--carte); border: 1px solid var(--bord); border-radius: 12px;
+  padding: 16px; display: grid; gap: 12px; margin-bottom: 12px;
+}
+.ligne-titre { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+.ligne-titre h2 { margin: 0; text-transform: capitalize; }
+.deux { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: end; }
+
+label { display: grid; gap: 4px; font-weight: 500; }
+input, select, button { font: inherit; min-height: 44px; }
+input, select {
+  width: 100%; padding: 8px 10px; border: 1px solid var(--bord); border-radius: 8px;
+  background: var(--fond); color: var(--texte);
+}
+fieldset { border: 0; padding: 0; margin: 0; }
+legend { font-weight: 500; margin-bottom: 4px; }
+
+button {
+  border: 0; border-radius: 8px; padding: 10px 16px;
+  background: var(--theme); color: #fff; font-weight: 600; cursor: pointer;
+}
+button.petit { min-height: 36px; padding: 6px 12px; font-size: .875rem; }
+button.secondaire { background: transparent; color: var(--texte); border: 1px solid var(--bord); }
+button.fleche { min-width: 44px; min-height: 44px; font-size: 1.4rem; line-height: 1; background: var(--carte); color: var(--texte); border: 1px solid var(--bord); }
+
+/* Choix du lieu : trois grosses pastilles */
+.lieux { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.lieux legend { grid-column: 1 / -1; }
+.lieux label {
+  display: block; text-align: center; font-weight: 500; font-size: .875rem; cursor: pointer;
+  position: relative; padding: 8px 4px; border: 2px solid var(--bord); border-radius: 10px; background: var(--fond);
+}
+.lieux input { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; margin: 0; opacity: 0; pointer-events: none; }
+.lieux label:has(input:focus-visible) { outline: 2px solid var(--theme); outline-offset: 2px; }
+.lieux label:has(input[value="Angoulême"]:checked) { border-color: var(--angouleme); background: color-mix(in srgb, var(--angouleme) 18%, transparent); }
+.lieux label:has(input[value="Parents"]:checked) { border-color: var(--parents); background: color-mix(in srgb, var(--parents) 18%, transparent); }
+.lieux label:has(input[value="Ailleurs"]:checked) { border-color: var(--ailleurs); background: color-mix(in srgb, var(--ailleurs) 18%, transparent); }
+
+/* Calendrier */
+.angouleme { --lieu: var(--angouleme); }
+.parents { --lieu: var(--parents); }
+.ailleurs { --lieu: var(--ailleurs); }
+.legende { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .8rem; color: var(--doux); margin-bottom: 10px; }
+.legende i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--lieu); margin-right: 5px; }
+.grille { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.entetes { font-size: .75rem; color: var(--doux); text-align: center; margin-bottom: 4px; }
+.jour {
+  position: relative; display: grid; grid-template-rows: 1fr 1fr; gap: 2px;
+  aspect-ratio: 1 / 1.15; min-height: 0; padding: 0; overflow: hidden;
+  background: var(--bord); border-radius: 8px; border: 0;
+}
+.jour .demi { background: var(--lieu, var(--doux)); }
+.jour .num {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  color: #fff; font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,.45);
+}
+.jour.passe { opacity: .45; }
+.jour.aujourdhui { outline: 3px solid var(--texte); outline-offset: 1px; }
+
+/* Liste des périodes */
+.liste { list-style: none; margin: 0; padding: 0; }
+.liste > li {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px; background: var(--carte); border: 1px solid var(--bord); border-radius: 10px; margin-bottom: 6px;
+}
+.liste > li.vide { background: none; border: 0; padding: 0; }
+.liste > li.periode { border-left: 6px solid var(--lieu); }
+.liste .nom { flex: 1; min-width: 0; display: grid; }
+
+dialog {
+  border: 0; border-radius: 16px; padding: 20px; width: min(92vw, 420px);
+  background: var(--carte); color: var(--texte);
+}
+dialog::backdrop { background: rgba(0,0,0,.45); }
+dialog form { display: grid; gap: 16px; }
+dialog h2 { margin: 0; font-size: 1.15rem; }
+dialog h2::first-letter { text-transform: uppercase; }
+
+nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  display: flex; background: var(--carte); border-top: 1px solid var(--bord);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+nav a {
+  flex: 1; display: grid; justify-items: center; padding: 8px 0;
+  font-size: 1.3rem; text-decoration: none; color: var(--doux);
+}
+nav a span { font-size: .7rem; }
+nav a.active { color: var(--theme); font-weight: 600; }

@@ -1,0 +1,34 @@
+# À coller dans Container Manager → Projet → Créer (voir docs/MISE-EN-LIGNE.md).
+# Au démarrage : clone ou met à jour le dépôt GitHub, installe et lance le serveur.
+# Pour déployer une nouvelle version : pousser sur GitHub, puis redémarrer le projet.
+services:
+  agendix:
+    image: node:20-alpine
+    container_name: agendix
+    restart: unless-stopped
+    ports:
+      - "3013:3013"
+    environment:
+      - PORT=3013
+      - TZ=Europe/Paris
+      # Mot de passe demandé une fois sur chaque téléphone (obligatoire : sans lui l'appli refuse de démarrer)
+      - APP_PASSWORD=
+      # Clé partagée avec Repax et Argenx (même valeur dans les trois projets) pour qu'ils lisent l'agenda
+      - CLE_INTERNE=
+      # Jeton de l'intégration Notion (vide = mode démo, données dans le conteneur)
+      - NOTION_TOKEN=
+      # Identifiant de la page Notion qui accueille la base « Présence »
+      - NOTION_PAGE_ID=
+    volumes:
+      - ./app:/app
+    working_dir: /app
+    command: >
+      sh -c "apk add --no-cache git &&
+             git config --global --add safe.directory /app &&
+             if [ -d /app/.git ]; then
+               git fetch --depth 1 origin main && git reset --hard FETCH_HEAD;
+             else
+               git clone --depth 1 https://github.com/Kaloomc/agendix.git /app;
+             fi &&
+             npm ci --omit=dev &&
+             npm start"
