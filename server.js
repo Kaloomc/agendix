@@ -11,21 +11,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // --- Accès ---------------------------------------------------------------------
 // Mot de passe obligatoire : l'appli est sur Internet. Un cookie garde la session un an.
-// Les autres applis du NAS (Repax, Argenx) passent par l'en-tête X-Cle-Interne = CLE_INTERNE.
+// Les autres applis (Repax, Argenx) ne passent pas par ici : elles lisent la base Notion « Présence ».
 const MOT_DE_PASSE = process.env.APP_PASSWORD;
 if (!MOT_DE_PASSE) throw new Error('APP_PASSWORD manquant : choisis un mot de passe (ex. APP_PASSWORD=... npm start).');
-const CLE_INTERNE = process.env.CLE_INTERNE;
 const signer = (s) => crypto.createHmac('sha256', s).update('agendix').digest('hex');
 const jeton = signer(MOT_DE_PASSE);
 const egal = (a, b) => a.length === b.length && crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
 
 app.use('/api', (req, res, next) => {
-  const cleRecue = req.get('X-Cle-Interne');
-  if (cleRecue !== undefined) {
-    // Empreintes de même longueur : comparaison à temps constant quelle que soit la clé reçue.
-    if (CLE_INTERNE && egal(signer(cleRecue), signer(CLE_INTERNE))) return next();
-    return res.status(401).json({ erreur: 'Clé interne refusée' });
-  }
   if (req.path === '/etat' || req.path === '/connexion') return next();
   const cookie = (req.headers.cookie || '').match(/(?:^|;\s*)agendix=([a-f0-9]+)/)?.[1] || '';
   if (egal(cookie, jeton)) return next();
@@ -129,6 +122,6 @@ module.exports = app;
 if (require.main === module) {
   const PORT = process.env.PORT || 3013;
   app.listen(PORT, () => {
-    console.log(`Agendix sur http://localhost:${PORT} (mode ${store.mode}${CLE_INTERNE ? ', clé interne active' : ''})`);
+    console.log(`Agendix sur http://localhost:${PORT} (mode ${store.mode})`);
   });
 }

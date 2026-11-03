@@ -4,7 +4,6 @@ const assert = require('node:assert');
 const { creneaux, LIEUX } = require('./presence');
 
 process.env.APP_PASSWORD = 'mot-de-passe-test';
-process.env.CLE_INTERNE = 'cle-test';
 delete process.env.NOTION_TOKEN;
 const app = require('./server');
 
@@ -54,23 +53,19 @@ test.after(() => serveur.close());
 
 const presence = (entetes = {}) => fetch(`${base}/api/presence?du=2026-11-30&au=2026-12-02`, { headers: entetes });
 
-test('en-tête X-Cle-Interne : bonne clé acceptée, mauvaise ou absente refusée', async () => {
-  assert.strictEqual((await presence({ 'X-Cle-Interne': 'cle-test' })).status, 200);
-  assert.strictEqual((await presence({ 'X-Cle-Interne': 'mauvaise' })).status, 401);
-  assert.strictEqual((await presence({ 'X-Cle-Interne': '' })).status, 401);
+let cookie;
+test('connexion obligatoire : mot de passe puis cookie, aucune autre porte', async () => {
   assert.strictEqual((await presence()).status, 401);
-});
-
-test('connexion par mot de passe puis cookie', async () => {
+  assert.strictEqual((await presence({ 'X-Cle-Interne': 'nimporte' })).status, 401);
   const non = await fetch(`${base}/api/connexion`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"motDePasse":"faux"}' });
   assert.strictEqual(non.status, 401);
   const oui = await fetch(`${base}/api/connexion`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"motDePasse":"mot-de-passe-test"}' });
-  const cookie = oui.headers.get('set-cookie').split(';')[0];
+  cookie = oui.headers.get('set-cookie').split(';')[0];
   assert.strictEqual((await presence({ Cookie: cookie })).status, 200);
 });
 
-test('format exact de /api/presence (utilisé par Repax)', async () => {
-  const r = await (await presence({ 'X-Cle-Interne': 'cle-test' })).json();
+test('format de /api/presence (utilisé par le calendrier)', async () => {
+  const r = await (await presence({ Cookie: cookie })).json();
   assert.deepStrictEqual(Object.keys(r), ['lieuParDefaut', 'creneaux']);
   assert.ok(LIEUX.includes(r.lieuParDefaut));
   assert.deepStrictEqual(r.creneaux.map((c) => `${c.date} ${c.moment}`), [
@@ -80,6 +75,6 @@ test('format exact de /api/presence (utilisé par Repax)', async () => {
     assert.deepStrictEqual(Object.keys(c), ['date', 'moment', 'lieu']);
     assert.ok(LIEUX.includes(c.lieu));
   }
-  const mauvais = await fetch(`${base}/api/presence?du=2026-12-02&au=2026-11-30`, { headers: { 'X-Cle-Interne': 'cle-test' } });
+  const mauvais = await fetch(`${base}/api/presence?du=2026-12-02&au=2026-11-30`, { headers: { Cookie: cookie } });
   assert.strictEqual(mauvais.status, 400);
 });

@@ -1,41 +1,25 @@
 # Mise en ligne pas à pas
 
-But : Agendix disponible sur **https://teranga-nas.synology.me:8446**, installée sur l'écran d'accueil du téléphone,
-et lisible par Repax et Argenx sur le réseau de la maison (**http://192.168.1.45:3013**).
+But : Agendix disponible sur **https://teranga-nas.synology.me:8446**, installée sur l'écran d'accueil du téléphone.
 Même recette que Repax (3011 / 8444) et Argenx (3012 / 8445), avec le port **3013** côté NAS et **8446** côté Internet.
+
+Agendix et Repax partagent **la même page Notion** : Agendix y range la base « Présence », Repax la lit pour savoir quand tu es à Angoulême.
+Les deux applis ne se parlent pas directement : tout passe par Notion.
 
 Le code est déjà sur GitHub : https://github.com/Kaloomc/agendix (dépôt public, sans aucun secret : les mots de passe et jetons restent dans Container Manager).
 
 ---
 
-## 1. Choisir la clé interne (une seule fois pour les trois applis)
+## 1. Notion : reprendre celui de Repax
 
-Repax et Argenx demandent à Agendix où tu es. Pour qu'Agendix sache que c'est bien eux, ils envoient une **clé interne** : une longue suite de caractères que toi seul connais, **la même dans les trois projets**.
+Rien à créer : réutilise **le jeton (`NOTION_TOKEN`) et la page (`NOTION_PAGE_ID`) de Repax**, copiés depuis le YAML du projet `gestion-repas` dans Container Manager.
 
-Pour en générer une, dans un terminal :
-
-```bash
-node -e "console.log(require('crypto').randomBytes(24).toString('hex'))"
-```
-
-Garde-la de côté (gestionnaire de mots de passe) : elle va dans `CLE_INTERNE` d'**Agendix**, de **Repax** et d'**Argenx**.
-
----
-
-## 2. Préparer Notion (facultatif, sinon mode démo)
-
-1. Va sur https://www.notion.so/profile/integrations → **Nouvelle intégration** (ou réutilise celle de Repax).
-   - Type : **Interne**. Copie le **jeton secret** (`ntn_...`) : c'est `NOTION_TOKEN`.
-2. Dans Notion, crée une page vide **« Agendix »**.
-3. Sur cette page : **•••** → **Connexions** → ajoute ton intégration. Sans ça, l'appli ne voit pas la page.
-4. Copie le lien de la page (**•••** → **Copier le lien**) : les 32 caractères à la fin sont `NOTION_PAGE_ID`.
-
-Au premier démarrage, l'appli crée toute seule la base **« Présence »** dans cette page
+Au premier démarrage, Agendix crée toute seule la base **« Présence »** dans cette page, à côté des bases de Repax
 (colonnes Note, Du, Moment de début, Au, Moment de fin, Lieu, Ordre).
 
 ---
 
-## 3. Créer le projet dans Container Manager
+## 2. Créer le projet dans Container Manager
 
 1. **File Station** → dossier `docker` → crée un dossier **`agendix`**, puis **dedans** un dossier vide **`app`**.
    Les deux dossiers `/docker/agendix` **et** `/docker/agendix/app` doivent exister avant de lancer :
@@ -44,21 +28,20 @@ Au premier démarrage, l'appli crée toute seule la base **« Présence »** dan
    - Nom du projet : `agendix`
    - Chemin : `/docker/agendix`
    - Source : **Créer un fichier docker-compose.yml**
-3. Colle le contenu de [`docker-compose.yml`](../docker-compose.yml) et remplis les 4 lignes :
+3. Colle le contenu de [`docker-compose.yml`](../docker-compose.yml) et remplis les 3 lignes :
    - `APP_PASSWORD=` un mot de passe à toi (**obligatoire** : sans lui, l'appli refuse de démarrer)
-   - `CLE_INTERNE=` la clé de l'étape 1
-   - `NOTION_TOKEN=ntn_...` (ou vide pour le mode démo)
-   - `NOTION_PAGE_ID=1a2b3c...`
+   - `NOTION_TOKEN=` le même que Repax
+   - `NOTION_PAGE_ID=` le même que Repax
 4. **Suivant** → (pas besoin de Web Station) → **Terminé**. Le projet démarre.
 5. Vérifie : **Conteneur** → `agendix` → **Journal**. Tu dois voir à la fin :
-   `Agendix sur http://localhost:3013 (mode notion, clé interne active)`
-   Le premier démarrage prend 1 à 2 minutes.
+   `Agendix sur http://localhost:3013 (mode notion)`
+   Le premier démarrage prend 1 à 2 minutes. Si c'est `mode demo`, le jeton Notion est vide : Repax ne verra rien.
 
 Test sur le réseau de la maison : http://192.168.1.45:3013
 
 ---
 
-## 4. Proxy inversé HTTPS (port 8446)
+## 3. Proxy inversé HTTPS (port 8446)
 
 **Panneau de configuration** → **Portail de connexion** → **Avancé** → **Proxy inversé** → **Créer** :
 
@@ -72,14 +55,14 @@ Nom de la règle : `agendix`. Coche **Activer HSTS** si tu veux.
 
 ---
 
-## 5. Certificat
+## 4. Certificat
 
 **Panneau de configuration** → **Sécurité** → **Certificat** → **Paramètres** :
 pour le service **`teranga-nas.synology.me:8446`**, choisis le certificat **teranga-nas.synology.me** → **OK**.
 
 ---
 
-## 6. Ouvrir le port sur la Freebox
+## 5. Ouvrir le port sur la Freebox
 
 1. http://mafreebox.freebox.fr → **Paramètres de la Freebox** → **Mode avancé** → **Gestion des ports**.
 2. **Ajouter une redirection** :
@@ -92,13 +75,12 @@ pour le service **`teranga-nas.synology.me:8446`**, choisis le certificat **tera
 3. **Sauvegarder**.
 
 Si le **pare-feu DSM** est activé, autorise aussi le port TCP **8446**.
-Le port **3013** n'a **pas** besoin d'être ouvert sur la Freebox : Repax et Argenx l'utilisent depuis le NAS lui-même.
 
 Test depuis le téléphone **en 4G (Wi-Fi coupé)** : https://teranga-nas.synology.me:8446 → l'écran de connexion s'affiche.
 
 ---
 
-## 7. Mettre l'appli sur l'écran d'accueil
+## 6. Mettre l'appli sur l'écran d'accueil
 
 ### iPhone (avec Safari, obligatoirement)
 1. Ouvre https://teranga-nas.synology.me:8446 dans **Safari** et connecte-toi.
@@ -110,24 +92,15 @@ Test depuis le téléphone **en 4G (Wi-Fi coupé)** : https://teranga-nas.synolo
 
 ---
 
-## 8. Brancher Repax et Argenx
+## 7. Vérifier le lien avec Repax
 
-Dans Container Manager, pour **chacun** des projets `gestion-repas` (Repax) et `argenx` :
-**Arrêter** → **Modifier** le YAML → mets **la même valeur `CLE_INTERNE`** qu'Agendix (et l'adresse de l'agenda,
-`http://192.168.1.45:3013`, si leur YAML la demande) → **Enregistrer** → **Démarrer**.
-
-Vérification depuis un ordinateur de la maison (remplace `TA_CLE`) :
-
-```bash
-curl -H "X-Cle-Interne: TA_CLE" "http://192.168.1.45:3013/api/presence?du=2026-11-20&au=2026-11-23"
-```
-
-Réponse attendue : `{"lieuParDefaut":"Angoulême","creneaux":[{"date":"2026-11-20","moment":"midi","lieu":"Angoulême"}, ...]}`.
-Un `401` veut dire que la clé n'est pas la même des deux côtés.
+1. Dans Agendix, ajoute une période (par exemple « Parents » ce week-end).
+2. Dans Notion, ouvre la page de Repax : la base **« Présence »** contient la ligne.
+3. Dans Repax, repropose les repas : rien n'est prévu pendant le week-end chez les parents.
 
 ---
 
-## 9. Mettre à jour l'appli
+## 8. Mettre à jour l'appli
 
 1. Pousse les changements sur GitHub (`git push`).
 2. **Container Manager** → **Projet** → `agendix` → **Action** → **Redémarrer**.
@@ -138,9 +111,9 @@ Un `401` veut dire que la clé n'est pas la même des deux côtés.
 
 | Problème | Piste |
 |---|---|
-| `Bind mount failed` | Le dossier `/docker/agendix/app` n'existe pas (étape 3.1) |
+| `Bind mount failed` | Le dossier `/docker/agendix/app` n'existe pas (étape 2.1) |
 | Le journal affiche `APP_PASSWORD manquant` | Remplis `APP_PASSWORD` dans le YAML |
-| `Notion : Could not find block` | La page n'est pas connectée à l'intégration (étape 2.3), ou `NOTION_PAGE_ID` est faux |
-| Repax prévoit des repas alors que tu es chez tes parents | `CLE_INTERNE` différente entre Repax et Agendix, ou Agendix arrêté |
-| La page ne s'ouvre pas depuis la 4G | Redirection Freebox (étape 6) ou pare-feu DSM |
-| Avertissement de certificat | Étape 5 : le certificat n'est pas associé au port 8446 |
+| `Notion : Could not find block` | `NOTION_PAGE_ID` différent de celui de Repax, ou page non connectée à l'intégration |
+| Repax prévoit des repas alors que tu es chez tes parents | Agendix en `mode demo` (jeton vide), ou pas la même page Notion que Repax |
+| La page ne s'ouvre pas depuis la 4G | Redirection Freebox (étape 5) ou pare-feu DSM |
+| Avertissement de certificat | Étape 4 : le certificat n'est pas associé au port 8446 |
