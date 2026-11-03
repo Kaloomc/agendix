@@ -34,8 +34,16 @@ const dire = (el, texte) => {
 const CHARGER = {
   calendrier: () => chargerCalendrier(),
   periodes: () => chargerPeriodes(),
-  reglages: () => chargerPeriodes(),
+  reglages: () => Promise.all([chargerPeriodes(), chargerCalendrierIcs()]),
 };
+
+async function chargerCalendrierIcs() {
+  const { chemin } = await api('/api/calendrier');
+  const adresse = location.origin + chemin;
+  $('#adresse-calendrier').value = adresse;
+  $('#lien-calendrier').href = adresse.replace(/^https?:/, 'webcal:');
+}
+$('#adresse-calendrier').addEventListener('focus', (e) => e.target.select());
 
 function afficherOnglet() {
   const id = location.hash.slice(1) || 'calendrier';

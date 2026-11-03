@@ -29,7 +29,9 @@ Sans Notion configuré, l'appli tourne en **mode démo** (données dans `data/ag
 |---|---|
 | 📅 Calendrier | Le mois, avec deux demi-cases par jour : le haut = midi, le bas = soir, colorées selon le lieu. Toucher un jour permet de changer le midi et/ou le soir |
 | 🧳 Périodes | « Du … (midi/soir) au … (midi/soir) : lieu + note », et la liste des périodes à venir (avec suppression) |
-| ⚙️ Réglages | Le lieu par défaut, quand rien n'est prévu (Angoulême au départ) |
+| ⚙️ Réglages | Le lieu par défaut, quand rien n'est prévu (Angoulême au départ), et le lien d'abonnement pour voir l'agenda dans le calendrier du téléphone (.ics, adresse secrète) |
+
+Ménage automatique : une période entièrement recouverte par une plus récente est retirée, et les périodes finies depuis plus de 2 mois sont archivées dans Notion (une fois par jour).
 
 ## Comment le lieu est calculé
 

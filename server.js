@@ -73,6 +73,7 @@ app.get('/api/presence', async (req, res) => {
 
 // --- Périodes ------------------------------------------------------------------
 app.get('/api/periodes', async (req, res) => {
+  menage().catch((err) => console.error('Ménage :', err.message)); // en tâche de fond
   const { lieuParDefaut, periodes } = await lire();
   const jour = aujourdhui();
   res.json({
@@ -90,8 +91,23 @@ app.post('/api/periodes', async (req, res) => {
   verifier(cle(du, duMoment) <= cle(au, auMoment), 'La fin est avant le début');
   verifier(LIEUX.includes(lieu), 'Lieu inconnu');
   verifier(typeof note === 'string', 'Note invalide');
-  res.json(await store.add({ du, duMoment, au, auMoment, lieu, note: note.trim().slice(0, 200), ordre: prochainOrdre() }));
+  const { periodes } = await lire();
+  const ligne = await store.add({ du, duMoment, au, auMoment, lieu, note: note.trim().slice(0, 200), ordre: prochainOrdre() });
+  // Les périodes plus anciennes entièrement recouvertes par la nouvelle ne servent plus à rien : on les retire.
+  const cachees = periodes.filter((p) => cle(p.du, p.duMoment) >= cle(du, duMoment) && cle(p.au, p.auMoment) <= cle(au, auMoment));
+  await Promise.all(cachees.map((p) => store.remove(p.id)));
+  res.json(ligne);
 });
+
+// Ménage, au plus une fois par jour : les périodes finies depuis plus de 2 mois sont archivées dans Notion.
+let dernierMenage = null;
+async function menage() {
+  const jour = aujourdhui();
+  if (dernierMenage === jour) return;
+  dernierMenage = jour;
+  const { periodes } = await lire();
+  for (const p of periodes.filter((p) => p.au < ajouterJours(jour, -60))) await store.remove(p.id);
+}
 
 app.delete('/api/periodes/:id', async (req, res) => {
   const { periodes } = await lire();
@@ -109,6 +125,46 @@ app.put('/api/reglages', async (req, res) => {
   if (reglage) await store.update(reglage.id, ligne);
   else await store.add(ligne);
   res.json({ lieuParDefaut: lieu });
+});
+
+// --- Abonnement calendrier (.ics) ------------------------------------------------
+// Le calendrier du téléphone ne sait pas se connecter : l'adresse contient un jeton secret, dérivé du mot de passe.
+const jetonIcs = crypto.createHmac('sha256', MOT_DE_PASSE).update('agendix-calendrier').digest('hex').slice(0, 32);
+app.get('/api/calendrier', (req, res) => res.json({ chemin: `/calendrier/${jetonIcs}.ics` }));
+
+const ICONE = { Angoulême: '🏠', Parents: '👨‍👩‍👦', Ailleurs: '✈️' };
+const echapper = (s) => s.replace(/[\\;,]/g, (c) => '\\' + c);
+const dateIcs = (d) => d.replaceAll('-', '');
+const jourLong = (d) => new Date(d + 'T12:00:00Z').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+
+// Un événement « journée entière » par suite de repas hors du lieu par défaut, du mois dernier à dans un an.
+app.get('/calendrier/:jeton.ics', async (req, res) => {
+  if (!egal(req.params.jeton, jetonIcs)) return res.status(404).end();
+  const { lieuParDefaut, periodes } = await lire();
+  const jour = aujourdhui();
+  const blocs = [];
+  for (const c of creneaux(periodes, lieuParDefaut, ajouterJours(jour, -30), ajouterJours(jour, 365))) {
+    const b = blocs.at(-1);
+    if (b?.lieu === c.lieu) b.dernier = c;
+    else blocs.push({ lieu: c.lieu, premier: c, dernier: c });
+  }
+  const maintenant = new Date().toISOString().replace(/[-:]|\.\d+/g, '');
+  const evenements = blocs.filter((b) => b.lieu !== lieuParDefaut).map(({ lieu, premier: p, dernier: d }) => [
+    'BEGIN:VEVENT',
+    `UID:${p.date}-${p.moment}-${lieu}@agendix`,
+    `DTSTAMP:${maintenant}`,
+    `DTSTART;VALUE=DATE:${dateIcs(p.date)}`,
+    `DTEND;VALUE=DATE:${dateIcs(ajouterJours(d.date, 1))}`,
+    `SUMMARY:${echapper(`${ICONE[lieu]} ${lieu}`)}`,
+    `DESCRIPTION:${echapper(`Du ${jourLong(p.date)} ${p.moment} au ${jourLong(d.date)} ${d.moment}`)}`,
+    'TRANSP:TRANSPARENT',
+    'END:VEVENT',
+  ].join('\r\n'));
+  res.type('text/calendar; charset=utf-8').send([
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Agendix//FR', 'CALSCALE:GREGORIAN',
+    'X-WR-CALNAME:Agendix', 'REFRESH-INTERVAL;VALUE=DURATION:PT6H', 'X-PUBLISHED-TTL:PT6H',
+    ...evenements, 'END:VCALENDAR', '',
+  ].join('\r\n'));
 });
 
 // --- Erreurs -----------------------------------------------------------------

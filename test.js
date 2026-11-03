@@ -78,3 +78,22 @@ test('format de /api/presence (utilisé par le calendrier)', async () => {
   const mauvais = await fetch(`${base}/api/presence?du=2026-12-02&au=2026-11-30`, { headers: { Cookie: cookie } });
   assert.strictEqual(mauvais.status, 400);
 });
+
+test('une période recouverte par une plus récente est retirée ; calendrier .ics', async () => {
+  const appel = async (method, url, body) =>
+    (await fetch(base + url, { method, headers: { Cookie: cookie, 'Content-Type': 'application/json' }, body: body && JSON.stringify(body) })).json();
+  const jour = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Paris' });
+  const dans = (n) => { const d = new Date(jour + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+  const petite = await appel('POST', '/api/periodes', { du: dans(10), duMoment: 'soir', au: dans(10), auMoment: 'soir', lieu: 'Ailleurs', note: 'test' });
+  const grande = await appel('POST', '/api/periodes', { du: dans(9), duMoment: 'soir', au: dans(12), auMoment: 'midi', lieu: 'Parents', note: 'test' });
+  const ids = (await appel('GET', '/api/periodes')).periodes.map((p) => p.id);
+  assert.ok(ids.includes(grande.id) && !ids.includes(petite.id));
+
+  const { chemin } = await appel('GET', '/api/calendrier');
+  assert.strictEqual((await fetch(base + '/calendrier/faux.ics')).status, 404);
+  const ics = await (await fetch(base + chemin)).text();
+  assert.ok(ics.startsWith('BEGIN:VCALENDAR\r\n') && ics.endsWith('END:VCALENDAR\r\n'));
+  assert.ok(ics.includes(`DTSTART;VALUE=DATE:${dans(9).replaceAll('-', '')}\r\nDTEND;VALUE=DATE:${dans(13).replaceAll('-', '')}`), ics);
+  assert.ok(ics.includes(' soir au ') && ics.includes(' midi'));
+  await appel('DELETE', `/api/periodes/${grande.id}`);
+});

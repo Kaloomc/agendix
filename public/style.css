@@ -70,10 +70,11 @@ input, select {
 fieldset { border: 0; padding: 0; margin: 0; }
 legend { font-weight: 500; margin-bottom: 4px; }
 
-button {
+button, a.bouton {
   border: 0; border-radius: 8px; padding: 10px 16px;
   background: var(--theme); color: #fff; font-weight: 600; cursor: pointer;
 }
+a.bouton { display: block; text-align: center; text-decoration: none; }
 button.petit { min-height: 36px; padding: 6px 12px; font-size: .875rem; }
 button.secondaire { background: transparent; color: var(--texte); border: 1px solid var(--bord); }
 button.fleche { min-width: 44px; min-height: 44px; font-size: 1.4rem; line-height: 1; background: var(--carte); color: var(--texte); border: 1px solid var(--bord); }
