@@ -43,6 +43,22 @@ header {
 header h1 { margin: 0; font-size: 1.25rem; }
 .badge { font-size: .75rem; padding: 2px 8px; border-radius: 99px; background: rgba(255,255,255,.2); }
 
+/* Bouton « resynchroniser avec Notion » */
+button.rond {
+  margin-left: auto; min-width: 44px; min-height: 44px; padding: 0; font-size: 1.5rem; line-height: 1;
+  background: rgba(255,255,255,.2); border-radius: 50%;
+}
+button.rond.charge { animation: tourne 1s linear infinite; pointer-events: none; opacity: .7; }
+@keyframes tourne { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { button.rond.charge { animation: none; } }
+.toast {
+  position: fixed; left: 16px; right: 16px; bottom: calc(env(safe-area-inset-bottom) + 76px); z-index: 2;
+  max-width: 420px; margin: 0 auto; padding: 10px 14px; border-radius: 10px;
+  background: var(--texte); color: var(--fond); font-size: .9rem; text-align: center;
+}
+.toast.erreur { background: var(--rouge); color: #fff; }
+.toast[hidden] { display: none; }
+
 main { max-width: 640px; margin: 0 auto; padding: 16px 16px calc(env(safe-area-inset-bottom) + 88px); }
 section { display: none; }
 section.active { display: block; }

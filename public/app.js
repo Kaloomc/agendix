@@ -53,6 +53,34 @@ function afficherOnglet() {
 }
 addEventListener('hashchange', afficherOnglet);
 
+// --- Resynchroniser avec Notion ------------------------------------------------
+let minuterieToast;
+function toast(texte, erreur = false) {
+  const el = $('#toast');
+  el.textContent = texte;
+  el.classList.toggle('erreur', erreur);
+  el.hidden = false;
+  clearTimeout(minuterieToast);
+  minuterieToast = setTimeout(() => { el.hidden = true; }, erreur ? 6000 : 2500);
+}
+
+$('#synchro').addEventListener('click', async (e) => {
+  const bouton = e.currentTarget;
+  if (bouton.classList.contains('charge')) return;
+  bouton.classList.add('charge');
+  bouton.setAttribute('aria-busy', 'true');
+  try {
+    await api('/api/synchro', { method: 'POST' });
+    await CHARGER[location.hash.slice(1) || 'calendrier']?.(); // remet l'onglet affiché à jour
+    toast('À jour avec Notion ✔');
+  } catch (err) {
+    toast(`Synchronisation impossible : ${err.message}`, true);
+  } finally {
+    bouton.classList.remove('charge');
+    bouton.removeAttribute('aria-busy');
+  }
+});
+
 // --- Connexion ---------------------------------------------------------------
 $('#form-connexion').addEventListener('submit', async (e) => {
   e.preventDefault();

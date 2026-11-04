@@ -91,6 +91,12 @@ module.exports = function notion(titre, CHAMPS, nettoyer) {
 
   return {
     mode: 'notion',
+    // Resynchronisation à la demande : on retrouve la base dans la page (elle a pu être recréée ou
+    // changer de colonnes) puis on vérifie qu'elle répond. Les lectures vont déjà chercher Notion à chaque fois.
+    async refresh() {
+      base = null;
+      await getBase();
+    },
     async list() {
       const id = await getBase();
       const out = [];

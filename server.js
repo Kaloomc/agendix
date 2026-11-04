@@ -71,6 +71,13 @@ app.get('/api/presence', async (req, res) => {
   res.json({ lieuParDefaut, creneaux: creneaux(periodes, lieuParDefaut, du, au) });
 });
 
+// --- Resynchronisation avec Notion, à la demande (bouton ↻ de l'interface) -------------
+app.post('/api/synchro', async (req, res) => {
+  await store.refresh();
+  const { lieuParDefaut, periodes } = await lire();
+  res.json({ mode: store.mode, lieuParDefaut, periodes: periodes.length });
+});
+
 // --- Périodes ------------------------------------------------------------------
 app.get('/api/periodes', async (req, res) => {
   menage().catch((err) => console.error('Ménage :', err.message)); // en tâche de fond

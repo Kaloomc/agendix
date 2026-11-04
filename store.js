@@ -1,6 +1,6 @@
 // Stockage des périodes : Notion si NOTION_TOKEN est défini, sinon mode démo
 // (fichier data/agenda.json, ignoré par Git).
-// Les deux modes offrent les mêmes fonctions : list, add, update, remove.
+// Les deux modes offrent les mêmes fonctions : list, add, update, remove, refresh.
 // Le lieu par défaut est rangé comme une ligne sans date (note « Lieu par défaut »).
 const fs = require('fs');
 const path = require('path');
@@ -20,17 +20,21 @@ const nettoyer = (obj) => Object.fromEntries(Object.entries(obj).filter(([k]) =>
 function demo() {
   const FILE = path.join(__dirname, 'data', 'agenda.json');
   let db;
-  try {
-    db = JSON.parse(fs.readFileSync(FILE, 'utf8'));
-  } catch {
-    db = { periodes: [] };
-  }
+  const charger = () => {
+    try {
+      db = JSON.parse(fs.readFileSync(FILE, 'utf8'));
+    } catch {
+      db = { periodes: [] };
+    }
+  };
+  charger();
   const save = () => {
     fs.mkdirSync(path.dirname(FILE), { recursive: true });
     fs.writeFileSync(FILE, JSON.stringify(db, null, 2));
   };
   return {
     mode: 'demo',
+    refresh: async () => charger(), // relit le fichier (modifié à la main ?)
     list: async () => structuredClone(db.periodes),
     add: async (obj) => {
       const ligne = { id: crypto.randomUUID(), ...nettoyer(obj) };

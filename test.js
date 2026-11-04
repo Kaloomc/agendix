@@ -79,6 +79,15 @@ test('format de /api/presence (utilisé par le calendrier)', async () => {
   assert.strictEqual(mauvais.status, 400);
 });
 
+test('resynchronisation : connexion obligatoire, puis état renvoyé', async () => {
+  assert.strictEqual((await fetch(`${base}/api/synchro`, { method: 'POST' })).status, 401);
+  const res = await fetch(`${base}/api/synchro`, { method: 'POST', headers: { Cookie: cookie } });
+  assert.strictEqual(res.status, 200);
+  const r = await res.json();
+  assert.deepStrictEqual(Object.keys(r), ['mode', 'lieuParDefaut', 'periodes']);
+  assert.ok(LIEUX.includes(r.lieuParDefaut) && Number.isInteger(r.periodes));
+});
+
 test('une période recouverte par une plus récente est retirée ; calendrier .ics', async () => {
   const appel = async (method, url, body) =>
     (await fetch(base + url, { method, headers: { Cookie: cookie, 'Content-Type': 'application/json' }, body: body && JSON.stringify(body) })).json();
