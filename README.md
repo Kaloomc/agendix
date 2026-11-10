@@ -45,6 +45,10 @@ Le bouton ↻ de l'en-tête resynchronise à la demande avec Notion (`POST /api/
 
 Icônes SVG (sprite en tête de `public/index.html`, pas d'emojis). Le lieu se lit à la couleur **et** au motif : plein = Angoulême, rayures = Parents, points = Ailleurs.
 
+## Logo
+
+Le repère de lieu de l'interface coupé en deux (haut = midi, bas = soir), en deux aplats : fond `#131217` et trait `#b39ddb` (les couleurs sombres de l'appli), sans dégradé, halo ni transparence décorative. Le fichier maître est [`public/icons/icon.svg`](public/icons/icon.svg) ; `node scripts/export-icones.js` (Chromium ou Chrome en mode headless, aucune dépendance) en tire les PNG (512, 192, maskable 512, apple-touch-icon 180, favicons 32, 48 et SVG). Aperçu avant/après : [`docs/logo-apercu.png`](docs/logo-apercu.png). Après un changement d'icône, augmenter `VERSION` dans `public/sw.js`.
+
 ## Comment le lieu est calculé
 
 - Par défaut, je suis au **lieu par défaut**.
@@ -96,6 +100,7 @@ Le serveur n'expose `GET /api/presence?du=…&au=…` que pour le calendrier de 
 | `store.js` | Stockage : mode démo (fichier) ou Notion |
 | `notion.js` | Accès à l'API Notion |
 | `public/` | Interface (HTML/CSS/JS sans compilation), manifest, service worker, icônes |
+| `scripts/export-icones.js` | Export des icônes PNG depuis le SVG maître (hors runtime) |
 | `test.js` | Tests (`npm test`) |
 | `docker-compose.yml` | Projet pour Container Manager (NAS Synology) |
 

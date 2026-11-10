@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Agendix : le repère de lieu de l'interface (même tracé que #i-ailleurs), coupé en deux (haut = midi, bas = soir).
+       Deux aplats, aucune transparence : fond #131217 (--fond sombre), symbole #b39ddb (--theme sombre).
+       Fichier maître : les PNG et favicons sont produits par scripts/export-icones.js ; le rx="0" du fond
+       (22 %) passe à 0 pour les versions « plein cadre » (maskable, apple-touch-icon, favicons). -->
+  <rect width="512" height="512" rx="0" fill="#131217"/>
+  <g transform="translate(256 256) scale(18) translate(-12 -12)" fill="none" stroke="#b39ddb" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/>
+    <path d="M5 10h14"/>
+  </g>
+</svg>

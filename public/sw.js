@@ -1,8 +1,8 @@
 // Coque de l'appli (HTML, CSS, JS, icônes) servie tout de suite depuis le cache, puis mise à jour en arrière-plan :
 // l'écran s'affiche sans attendre le réseau. L'API (données) ne passe jamais par ici : app.js garde lui-même
 // le dernier état affiché. Changer VERSION pour forcer le renouvellement du cache.
-const VERSION = 'agendix-v2';
-const COQUE = ['./', 'style.css', 'app.js', 'manifest.json', 'icons/icon-192.png'];
+const VERSION = 'agendix-v4';
+const COQUE = ['./', 'style.css', 'app.js', 'manifest.json', 'icons/favicon.svg', 'icons/icon-192.png', 'icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(COQUE)).then(() => self.skipWaiting()));
