@@ -33,6 +33,18 @@ Sans Notion configuré, l'appli tourne en **mode démo** (données dans `data/ag
 
 Ménage automatique : une période entièrement recouverte par une plus récente est retirée, et les périodes finies depuis plus de 2 mois sont archivées dans Notion (une fois par jour).
 
+Le bouton ↻ de l'en-tête resynchronise à la demande avec Notion (`POST /api/synchro`) et met l'écran à jour.
+
+## Vitesse
+
+- **Écran instantané** : la coque de l'appli (HTML, CSS, JS, icônes) est servie par le service worker depuis le cache, puis mise à jour en arrière-plan (une nouvelle version s'affiche donc à la deuxième ouverture ; changer `VERSION` dans `public/sw.js` pour forcer le renouvellement). Chaque écran montre d'abord le dernier état gardé sur le téléphone (« Mis à jour il y a … »), puis se met à jour quand Notion a répondu.
+- **Lecture Notion gardée 30 s** côté serveur (`lire()` dans `server.js`) : changer de mois ou d'onglet ne relit pas Notion. Elle est oubliée à chaque écriture et par le bouton ↻ ; une modification faite à la main dans Notion apparaît donc au plus 30 s plus tard, ou tout de suite avec ↻.
+- Enregistrer un jour s'affiche tout de suite (avant la réponse de Notion).
+
+## Interface
+
+Icônes SVG (sprite en tête de `public/index.html`, pas d'emojis). Le lieu se lit à la couleur **et** au motif : plein = Angoulême, rayures = Parents, points = Ailleurs.
+
 ## Comment le lieu est calculé
 
 - Par défaut, je suis au **lieu par défaut**.

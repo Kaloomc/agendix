@@ -1,24 +1,27 @@
 :root {
   --theme: #5e35b1;
+  --sur-theme: #fff; /* texte posé sur --theme */
   --fond: #f6f5f9;
   --carte: #ffffff;
   --texte: #1c1b1f;
-  --doux: #625f6b;
-  --bord: #dedbe6;
+  --doux: #5c5966;
+  --bord: #cfcbd9;
   --rouge: #c62828;
   --angouleme: #2e7d32;
-  --parents: #ef6c00;
-  --ailleurs: #1e88e5;
+  --parents: #c75b00;
+  --ailleurs: #1565c0;
+  --colonne: 640px; /* largeur de la colonne centrale, aussi pour l'en-tête et la barre du bas */
   color-scheme: light dark;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --theme: #9575cd;
+    --theme: #b39ddb;
+    --sur-theme: #1a1030;
     --fond: #131217;
     --carte: #1e1c24;
     --texte: #e9e7ee;
-    --doux: #a29fab;
-    --bord: #33303b;
+    --doux: #a8a5b1;
+    --bord: #403c4a;
     --rouge: #ef5350;
     --angouleme: #43a047;
     --parents: #fb8c00;
@@ -33,33 +36,43 @@ body {
   background: var(--fond);
   color: var(--texte);
 }
+[hidden] { display: none !important; }
+.invisible { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* Icônes SVG (voir le sprite dans index.html) */
+.ico { width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: -.25em; flex: none; }
+:focus-visible { outline: 3px solid var(--theme); outline-offset: 2px; }
+header :focus-visible { outline-color: #fff; }
 
 header {
-  position: sticky; top: 0; z-index: 1;
-  display: flex; align-items: center; gap: 8px;
-  padding: calc(env(safe-area-inset-top) + 12px) 16px 12px;
+  position: sticky; top: 0; z-index: 10;
+  padding: env(safe-area-inset-top) max(16px, calc((100% - var(--colonne)) / 2 + 16px)) 0;
   background: #5e35b1; color: #fff;
 }
+.entete { display: flex; align-items: center; gap: 8px; min-height: 56px; }
 header h1 { margin: 0; font-size: 1.25rem; }
-.badge { font-size: .75rem; padding: 2px 8px; border-radius: 99px; background: rgba(255,255,255,.2); }
-
-/* Bouton « resynchroniser avec Notion » */
-button.rond {
-  margin-left: auto; min-width: 44px; min-height: 44px; padding: 0; font-size: 1.5rem; line-height: 1;
-  background: rgba(255,255,255,.2); border-radius: 50%;
+.badge { font-size: .75rem; padding: 2px 8px; border-radius: 99px; background: rgba(255,255,255,.2); white-space: nowrap; }
+header button.icone {
+  margin-left: auto; min-width: 44px; padding: 0; display: inline-grid; place-items: center;
+  background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.35); border-radius: 50%;
 }
-button.rond.charge { animation: tourne 1s linear infinite; pointer-events: none; opacity: .7; }
+header button.icone .ico { width: 22px; height: 22px; }
+header button.icone.charge { pointer-events: none; opacity: .75; }
+header button.icone.charge .ico { animation: tourne 1s linear infinite; }
 @keyframes tourne { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { button.rond.charge { animation: none; } }
+
 .toast {
-  position: fixed; left: 16px; right: 16px; bottom: calc(env(safe-area-inset-bottom) + 76px); z-index: 2;
+  position: fixed; left: 16px; right: 16px; bottom: calc(env(safe-area-inset-bottom) + 76px); z-index: 20;
   max-width: 420px; margin: 0 auto; padding: 10px 14px; border-radius: 10px;
   background: var(--texte); color: var(--fond); font-size: .9rem; text-align: center;
 }
-.toast.erreur { background: var(--rouge); color: #fff; }
-.toast[hidden] { display: none; }
+.toast.erreur { background: #b71c1c; color: #fff; }
 
-main { max-width: 640px; margin: 0 auto; padding: 16px 16px calc(env(safe-area-inset-bottom) + 88px); }
+/* Pas de navigation ni de bouton de synchronisation tant qu'on n'est pas connecté */
+body[data-ecran="connexion"] nav,
+body[data-ecran="connexion"] #synchro { display: none; }
+
+main { max-width: var(--colonne); margin: 0 auto; padding: 16px 16px calc(env(safe-area-inset-bottom) + 96px); }
 section { display: none; }
 section.active { display: block; }
 h2 { margin: 0 0 12px; font-size: 1.3rem; }
@@ -83,51 +96,63 @@ input, select {
   width: 100%; padding: 8px 10px; border: 1px solid var(--bord); border-radius: 8px;
   background: var(--fond); color: var(--texte);
 }
-fieldset { border: 0; padding: 0; margin: 0; }
+fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 legend { font-weight: 500; margin-bottom: 4px; }
 
 button, a.bouton {
   border: 0; border-radius: 8px; padding: 10px 16px;
-  background: var(--theme); color: #fff; font-weight: 600; cursor: pointer;
+  background: var(--theme); color: var(--sur-theme); font-weight: 600; cursor: pointer;
 }
-a.bouton { display: block; text-align: center; text-decoration: none; }
-button.petit { min-height: 36px; padding: 6px 12px; font-size: .875rem; }
+button:disabled { opacity: .5; cursor: default; }
+a.bouton { display: block; text-align: center; text-decoration: none; padding: 12px 16px; }
+button .ico, a.bouton .ico { margin-right: 2px; }
+button.petit { padding: 6px 12px; font-size: .875rem; }
 button.secondaire { background: transparent; color: var(--texte); border: 1px solid var(--bord); }
-button.fleche { min-width: 44px; min-height: 44px; font-size: 1.4rem; line-height: 1; background: var(--carte); color: var(--texte); border: 1px solid var(--bord); }
+button.fleche { display: inline-grid; place-items: center; min-width: 44px; padding: 0; background: var(--carte); color: var(--texte); border: 1px solid var(--bord); }
 
-/* Choix du lieu : trois grosses pastilles */
+/* Choix du lieu : trois grosses pastilles (icône + nom, la sélection se voit à la bordure épaisse et au gras) */
 .lieux { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .lieux legend { grid-column: 1 / -1; }
 .lieux label {
-  display: block; text-align: center; font-weight: 500; font-size: .875rem; cursor: pointer;
+  display: grid; justify-items: center; align-content: center; gap: 2px; min-height: 64px;
+  text-align: center; font-weight: 500; font-size: .875rem; cursor: pointer;
   position: relative; padding: 8px 4px; border: 2px solid var(--bord); border-radius: 10px; background: var(--fond);
 }
+.lieux label .ico { width: 24px; height: 24px; }
 .lieux input { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; margin: 0; opacity: 0; pointer-events: none; }
-.lieux label:has(input:focus-visible) { outline: 2px solid var(--theme); outline-offset: 2px; }
+.lieux label:has(input:focus-visible) { outline: 3px solid var(--theme); outline-offset: 2px; }
+.lieux label:has(input:checked) { font-weight: 700; }
 .lieux label:has(input[value="Angoulême"]:checked) { border-color: var(--angouleme); background: color-mix(in srgb, var(--angouleme) 18%, transparent); }
 .lieux label:has(input[value="Parents"]:checked) { border-color: var(--parents); background: color-mix(in srgb, var(--parents) 18%, transparent); }
 .lieux label:has(input[value="Ailleurs"]:checked) { border-color: var(--ailleurs); background: color-mix(in srgb, var(--ailleurs) 18%, transparent); }
 
-/* Calendrier */
+/* Lieux : couleur + motif (rayures pour Parents, points pour Ailleurs), pour ne pas dépendre de la seule couleur */
 .angouleme { --lieu: var(--angouleme); }
 .parents { --lieu: var(--parents); }
 .ailleurs { --lieu: var(--ailleurs); }
-.legende { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .8rem; color: var(--doux); margin-bottom: 10px; }
-.legende i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--lieu); margin-right: 5px; }
-.grille { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.jour .demi.parents, .legende i.parents {
+  background: repeating-linear-gradient(135deg, var(--lieu) 0 3px, color-mix(in srgb, var(--lieu) 55%, #fff) 3px 6px);
+}
+.jour .demi.ailleurs, .legende i.ailleurs {
+  background: radial-gradient(color-mix(in srgb, var(--lieu) 40%, #fff) 1.4px, var(--lieu) 1.6px) 0 0 / 6px 6px;
+}
+
+/* Calendrier */
+.legende { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .85rem; color: var(--doux); margin-bottom: 10px; }
+.legende span { display: inline-flex; align-items: center; gap: 4px; }
+.legende i { display: inline-block; width: 14px; height: 14px; border-radius: 3px; background: var(--lieu); margin-right: 2px; }
+.grille { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
 .entetes { font-size: .75rem; color: var(--doux); text-align: center; margin-bottom: 4px; }
 .jour {
-  position: relative; display: grid; grid-template-rows: 1fr 1fr; gap: 2px;
-  aspect-ratio: 1 / 1.15; min-height: 0; padding: 0; overflow: hidden;
-  background: var(--bord); border-radius: 8px; border: 0;
+  display: grid; grid-template-rows: auto 1fr 1fr; gap: 2px; aspect-ratio: 1 / 1.2; min-height: 48px; padding: 3px;
+  background: var(--carte); color: var(--texte); border: 1px solid var(--bord); border-radius: 8px;
 }
-.jour .demi { background: var(--lieu, var(--doux)); }
-.jour .num {
-  position: absolute; inset: 0; display: grid; place-items: center;
-  color: #fff; font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,.45);
-}
-.jour.passe { opacity: .45; }
-.jour.aujourdhui { outline: 3px solid var(--texte); outline-offset: 1px; }
+.jour .num { font-size: .8rem; font-weight: 700; line-height: 1.2; text-align: center; }
+.jour .demi { border-radius: 3px; background: var(--lieu, var(--doux)); }
+.jour.passe .num { color: var(--doux); font-weight: 500; }
+.jour.passe .demi { opacity: .55; }
+.jour.aujourdhui { border: 2px solid var(--texte); padding: 2px; }
+.jour.aujourdhui .num { text-decoration: underline; text-underline-offset: 2px; }
 
 /* Liste des périodes */
 .liste { list-style: none; margin: 0; padding: 0; }
@@ -137,7 +162,13 @@ button.fleche { min-width: 44px; min-height: 44px; font-size: 1.4rem; line-heigh
 }
 .liste > li.vide { background: none; border: 0; padding: 0; }
 .liste > li.periode { border-left: 6px solid var(--lieu); }
-.liste .nom { flex: 1; min-width: 0; display: grid; }
+.liste .nom { flex: 1; min-width: 0; display: grid; overflow-wrap: anywhere; }
+.liste .nom strong { display: flex; align-items: center; gap: 6px; }
+.liste button.petit { min-width: 44px; padding: 0; display: inline-grid; place-items: center; }
+
+.statut { margin: 12px 0 0; font-size: .875rem; color: var(--doux); }
+.statut.erreur { color: var(--rouge); }
+.statut button { min-height: 44px; padding: 6px 12px; margin-left: 8px; }
 
 dialog {
   border: 0; border-radius: 16px; padding: 20px; width: min(92vw, 420px);
@@ -149,13 +180,18 @@ dialog h2 { margin: 0; font-size: 1.15rem; }
 dialog h2::first-letter { text-transform: uppercase; }
 
 nav {
-  position: fixed; bottom: 0; left: 0; right: 0;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 10;
   display: flex; background: var(--carte); border-top: 1px solid var(--bord);
-  padding-bottom: env(safe-area-inset-bottom);
+  padding: 0 max(0px, calc((100% - var(--colonne)) / 2)) env(safe-area-inset-bottom);
 }
 nav a {
-  flex: 1; display: grid; justify-items: center; padding: 8px 0;
-  font-size: 1.3rem; text-decoration: none; color: var(--doux);
+  flex: 1; display: grid; justify-items: center; gap: 2px; padding: 8px 0 6px; min-height: 56px;
+  text-decoration: none; color: var(--doux);
 }
-nav a span { font-size: .7rem; }
+nav a .ico { width: 24px; height: 24px; }
+nav a span { font-size: .75rem; }
 nav a.active { color: var(--theme); font-weight: 600; }
+nav a.active .ico { stroke-width: 2.4; }
+
+@media (prefers-reduced-motion: reduce) { * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+@media (min-width: 640px) { .jour { aspect-ratio: 1 / 0.95; } }

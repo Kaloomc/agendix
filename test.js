@@ -88,6 +88,34 @@ test('resynchronisation : connexion obligatoire, puis état renvoyé', async () 
   assert.ok(LIEUX.includes(r.lieuParDefaut) && Number.isInteger(r.periodes));
 });
 
+test('lecture gardée 30 s en mémoire : une seule lecture du stockage, oubliée après une écriture ou une synchro', async () => {
+  const store = require('./store');
+  const lectureOrigine = store.list;
+  let lectures = 0;
+  store.list = (...args) => { lectures++; return lectureOrigine(...args); };
+  const appel = (method, url, body) =>
+    fetch(base + url, { method, headers: { Cookie: cookie, 'Content-Type': 'application/json' }, body: body && JSON.stringify(body) }).then((r) => r.json());
+  try {
+    await appel('POST', '/api/synchro'); // repart d'un cache rempli à neuf
+    lectures = 0;
+    await appel('GET', '/api/periodes');
+    await appel('GET', '/api/presence?du=2026-11-30&au=2026-12-02');
+    await appel('GET', '/api/presence?du=2026-12-01&au=2026-12-31');
+    assert.strictEqual(lectures, 0, 'les lectures suivant une synchro viennent du cache');
+    await appel('PUT', '/api/reglages', { lieuParDefaut: 'Angoulême' }); // une écriture relit à neuf, puis oublie le cache
+    lectures = 0;
+    await appel('GET', '/api/periodes');
+    await appel('GET', '/api/periodes');
+    assert.strictEqual(lectures, 1, 'après une écriture, une seule relecture, puis le cache');
+    await appel('POST', '/api/synchro');
+    assert.strictEqual(lectures, 2, 'la synchro relit à neuf');
+    await appel('GET', '/api/periodes');
+    assert.strictEqual(lectures, 2, 'et remplit le cache');
+  } finally {
+    store.list = lectureOrigine;
+  }
+});
+
 test('une période recouverte par une plus récente est retirée ; calendrier .ics', async () => {
   const appel = async (method, url, body) =>
     (await fetch(base + url, { method, headers: { Cookie: cookie, 'Content-Type': 'application/json' }, body: body && JSON.stringify(body) })).json();

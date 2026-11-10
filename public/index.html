@@ -13,12 +13,32 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Agendix">
   <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
 </head>
-<body>
+<body data-ecran="calendrier">
+  <!-- Icônes : un seul jeu, trait de 2 px, couleur du texte (currentColor). Utilisées par <use href="#i-…"> et par ico() dans app.js. -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <symbol id="i-angouleme" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></symbol>
+    <symbol id="i-parents" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20v-1a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v1"/><circle cx="17" cy="9" r="2.5"/><path d="M17.5 14h.5a4 4 0 0 1 4 4v2"/></symbol>
+    <symbol id="i-ailleurs" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+    <symbol id="i-calendrier" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-periodes" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3 13h18"/></symbol>
+    <symbol id="i-reglages" viewBox="0 0 24 24"><path d="M4 6h10M20 6h0M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="17" cy="6" r="2.5"/><circle cx="9" cy="12" r="2.5"/><circle cx="17" cy="18" r="2.5"/></symbol>
+    <symbol id="i-actualiser" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14-4L4 9"/><path d="M4 4v5h5"/><path d="M4 13a8 8 0 0 0 14 4l2-2"/><path d="M20 20v-5h-5"/></symbol>
+    <symbol id="i-corbeille" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
+    <symbol id="i-avant" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="i-apres" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+    <symbol id="i-lien" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+    <symbol id="i-valide" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
+    <symbol id="i-alerte" viewBox="0 0 24 24"><path d="M12 4 2.5 20h19z"/><path d="M12 10v4.5M12 17.5v.5"/></symbol>
+  </svg>
+
   <header>
-    <h1>Agendix</h1>
-    <span id="mode" class="badge" hidden>Mode démo</span>
-    <button id="synchro" class="rond" type="button" title="Resynchroniser avec Notion" aria-label="Resynchroniser avec Notion">↻</button>
+    <div class="entete">
+      <h1>Agendix</h1>
+      <span id="mode" class="badge" hidden>Mode démo</span>
+      <button id="synchro" class="icone" type="button" title="Resynchroniser avec Notion" aria-label="Resynchroniser avec Notion"><svg class="ico" aria-hidden="true"><use href="#i-actualiser"/></svg></button>
+    </div>
   </header>
   <p id="toast" class="toast" role="status" aria-live="polite" hidden></p>
 
@@ -36,18 +56,19 @@
 
     <section id="calendrier">
       <div class="ligne-titre">
-        <button id="mois-avant" class="petit fleche" aria-label="Mois précédent">‹</button>
+        <button id="mois-avant" class="fleche" type="button" aria-label="Mois précédent"><svg class="ico" aria-hidden="true"><use href="#i-avant"/></svg></button>
         <h2 id="titre-mois"></h2>
-        <button id="mois-apres" class="petit fleche" aria-label="Mois suivant">›</button>
+        <button id="mois-apres" class="fleche" type="button" aria-label="Mois suivant"><svg class="ico" aria-hidden="true"><use href="#i-apres"/></svg></button>
       </div>
       <div class="legende">
-        <span><i class="angouleme"></i>🏠 Angoulême</span>
-        <span><i class="parents"></i>👨‍👩‍👦 Parents</span>
-        <span><i class="ailleurs"></i>✈️ Ailleurs</span>
+        <span><i class="angouleme"></i><svg class="ico" aria-hidden="true"><use href="#i-angouleme"/></svg> Angoulême</span>
+        <span><i class="parents"></i><svg class="ico" aria-hidden="true"><use href="#i-parents"/></svg> Parents</span>
+        <span><i class="ailleurs"></i><svg class="ico" aria-hidden="true"><use href="#i-ailleurs"/></svg> Ailleurs</span>
       </div>
-      <div class="grille entetes"><span>lun</span><span>mar</span><span>mer</span><span>jeu</span><span>ven</span><span>sam</span><span>dim</span></div>
+      <div class="grille entetes" aria-hidden="true"><span>lun</span><span>mar</span><span>mer</span><span>jeu</span><span>ven</span><span>sam</span><span>dim</span></div>
       <div id="jours" class="grille"></div>
-      <p class="aide">Chaque jour : le haut, c'est le midi ; le bas, le soir. Touche un jour pour changer où tu es.</p>
+      <p id="statut" class="statut" role="status" hidden></p>
+      <p class="aide">Chaque jour : la barre du haut, c'est le midi ; celle du bas, le soir. Touche un jour pour changer où tu es.</p>
     </section>
 
     <section id="periodes">
@@ -55,17 +76,17 @@
       <form id="form-periode" class="carte">
         <div class="deux">
           <label>Du <input name="du" type="date" required></label>
-          <label>&nbsp;<select name="duMoment"><option value="midi">midi</option><option value="soir">soir</option></select></label>
+          <label><span class="invisible">Moment de début</span><select name="duMoment"><option value="midi">midi</option><option value="soir">soir</option></select></label>
         </div>
         <div class="deux">
           <label>Au <input name="au" type="date" required></label>
-          <label>&nbsp;<select name="auMoment"><option value="midi">midi</option><option value="soir" selected>soir</option></select></label>
+          <label><span class="invisible">Moment de fin</span><select name="auMoment"><option value="midi">midi</option><option value="soir" selected>soir</option></select></label>
         </div>
         <fieldset class="lieux">
           <legend>Je serai</legend>
-          <label><input type="radio" name="lieu" value="Angoulême" required> 🏠 Angoulême</label>
-          <label><input type="radio" name="lieu" value="Parents" checked> 👨‍👩‍👦 Parents</label>
-          <label><input type="radio" name="lieu" value="Ailleurs"> ✈️ Ailleurs</label>
+          <label><input type="radio" name="lieu" value="Angoulême" required><svg class="ico" aria-hidden="true"><use href="#i-angouleme"/></svg><span>Angoulême</span></label>
+          <label><input type="radio" name="lieu" value="Parents" checked><svg class="ico" aria-hidden="true"><use href="#i-parents"/></svg><span>Parents</span></label>
+          <label><input type="radio" name="lieu" value="Ailleurs"><svg class="ico" aria-hidden="true"><use href="#i-ailleurs"/></svg><span>Ailleurs</span></label>
         </fieldset>
         <label>Note <input name="note" maxlength="200" placeholder="week-end chez les parents, vacances…"></label>
         <button type="submit">Ajouter la période</button>
@@ -73,7 +94,8 @@
       </form>
 
       <h3>Périodes à venir</h3>
-      <ul id="liste-periodes" class="liste"></ul>
+      <ul id="liste-periodes" class="liste" aria-live="polite"></ul>
+      <p id="statut-periodes" class="statut" role="status" hidden></p>
     </section>
 
     <section id="reglages">
@@ -81,41 +103,41 @@
       <form id="form-reglages" class="carte">
         <label>Quand rien n'est prévu, je suis
           <select name="lieuParDefaut">
-            <option value="Angoulême">🏠 Angoulême</option>
-            <option value="Parents">👨‍👩‍👦 Parents</option>
-            <option value="Ailleurs">✈️ Ailleurs</option>
+            <option value="Angoulême">Angoulême</option>
+            <option value="Parents">Parents</option>
+            <option value="Ailleurs">Ailleurs</option>
           </select>
         </label>
         <button type="submit">Enregistrer</button>
         <p class="message" role="status"></p>
       </form>
-      <p class="aide">Repax (les repas) lit cet agenda : il ne prévoit des repas que pour les créneaux à 🏠 Angoulême.</p>
+      <p class="aide">Repax (les repas) lit cet agenda : il ne prévoit des repas que pour les créneaux à Angoulême.</p>
 
-      <h3>📅 Dans le calendrier du téléphone</h3>
+      <h3>Dans le calendrier du téléphone</h3>
       <div class="carte">
         <p class="aide">Tes périodes hors du lieu par défaut apparaissent dans ton calendrier et se mettent à jour toutes seules (toutes les quelques heures).</p>
-        <a id="lien-calendrier" class="bouton" href="#">S'abonner au calendrier</a>
+        <a id="lien-calendrier" class="bouton" href="#"><svg class="ico" aria-hidden="true"><use href="#i-lien"/></svg> S'abonner au calendrier</a>
         <p class="aide">Sur iPhone, ça ouvre « S'abonner ». Sinon, copie cette adresse dans ton calendrier (Google Agenda : « Autres agendas » → « À partir de l'URL ») :</p>
-        <input id="adresse-calendrier" readonly>
+        <input id="adresse-calendrier" readonly aria-label="Adresse d'abonnement au calendrier">
         <p class="aide">Garde cette adresse pour toi : elle donne accès à ton agenda sans mot de passe.</p>
       </div>
     </section>
   </main>
 
-  <dialog id="dialogue-jour">
+  <dialog id="dialogue-jour" aria-labelledby="titre-jour">
     <form method="dialog" id="form-jour">
       <h2 id="titre-jour"></h2>
       <fieldset class="lieux">
         <legend>Midi</legend>
-        <label><input type="radio" name="midi" value="Angoulême"> <span>🏠<br>Angoulême</span></label>
-        <label><input type="radio" name="midi" value="Parents"> <span>👨‍👩‍👦<br>Parents</span></label>
-        <label><input type="radio" name="midi" value="Ailleurs"> <span>✈️<br>Ailleurs</span></label>
+        <label><input type="radio" name="midi" value="Angoulême"><svg class="ico" aria-hidden="true"><use href="#i-angouleme"/></svg><span>Angoulême</span></label>
+        <label><input type="radio" name="midi" value="Parents"><svg class="ico" aria-hidden="true"><use href="#i-parents"/></svg><span>Parents</span></label>
+        <label><input type="radio" name="midi" value="Ailleurs"><svg class="ico" aria-hidden="true"><use href="#i-ailleurs"/></svg><span>Ailleurs</span></label>
       </fieldset>
       <fieldset class="lieux">
         <legend>Soir</legend>
-        <label><input type="radio" name="soir" value="Angoulême"> <span>🏠<br>Angoulême</span></label>
-        <label><input type="radio" name="soir" value="Parents"> <span>👨‍👩‍👦<br>Parents</span></label>
-        <label><input type="radio" name="soir" value="Ailleurs"> <span>✈️<br>Ailleurs</span></label>
+        <label><input type="radio" name="soir" value="Angoulême"><svg class="ico" aria-hidden="true"><use href="#i-angouleme"/></svg><span>Angoulême</span></label>
+        <label><input type="radio" name="soir" value="Parents"><svg class="ico" aria-hidden="true"><use href="#i-parents"/></svg><span>Parents</span></label>
+        <label><input type="radio" name="soir" value="Ailleurs"><svg class="ico" aria-hidden="true"><use href="#i-ailleurs"/></svg><span>Ailleurs</span></label>
       </fieldset>
       <div class="deux">
         <button value="annuler" class="secondaire" formnovalidate>Annuler</button>
@@ -124,12 +146,10 @@
     </form>
   </dialog>
 
-  <nav>
-    <a href="#calendrier">📅<span>Calendrier</span></a>
-    <a href="#periodes">🧳<span>Périodes</span></a>
-    <a href="#reglages">⚙️<span>Réglages</span></a>
+  <nav aria-label="Navigation principale">
+    <a href="#calendrier"><svg class="ico" aria-hidden="true"><use href="#i-calendrier"/></svg><span>Calendrier</span></a>
+    <a href="#periodes"><svg class="ico" aria-hidden="true"><use href="#i-periodes"/></svg><span>Périodes</span></a>
+    <a href="#reglages"><svg class="ico" aria-hidden="true"><use href="#i-reglages"/></svg><span>Réglages</span></a>
   </nav>
-
-  <script src="app.js"></script>
 </body>
 </html>

@@ -48,7 +48,21 @@ const prochainOrdre = () => (dernierOrdre = Math.max(Date.now(), dernierOrdre + 
 
 // Les lignes sans date sont le réglage « lieu par défaut » ; les autres sont des périodes.
 // Une ligne modifiée à la main dans Notion peut être incomplète : on complète ce qui manque.
-async function lire() {
+// Notion répond en plusieurs centaines de millisecondes : la lecture est gardée 30 s en mémoire
+// (partagée par les requêtes simultanées), et oubliée dès qu'on écrit ou qu'on resynchronise.
+// Les écritures relisent toujours à neuf (lire(true)).
+const DUREE_CACHE = 30_000;
+let enCache = null; // { t, promesse }
+const oublier = () => { enCache = null; };
+function lire(frais = false) {
+  if (!frais && enCache && Date.now() - enCache.t < DUREE_CACHE) return enCache.promesse;
+  const promesse = lireStore();
+  const entree = { t: Date.now(), promesse };
+  enCache = entree;
+  promesse.catch(() => { if (enCache === entree) enCache = null; }); // une erreur n'est pas gardée
+  return promesse;
+}
+async function lireStore() {
   const lignes = await store.list();
   const reglage = lignes.filter((l) => !l.du).sort((a, b) => (b.ordre ?? 0) - (a.ordre ?? 0))[0];
   const periodes = lignes
@@ -73,8 +87,9 @@ app.get('/api/presence', async (req, res) => {
 
 // --- Resynchronisation avec Notion, à la demande (bouton ↻ de l'interface) -------------
 app.post('/api/synchro', async (req, res) => {
+  oublier();
   await store.refresh();
-  const { lieuParDefaut, periodes } = await lire();
+  const { lieuParDefaut, periodes } = await lire(true);
   res.json({ mode: store.mode, lieuParDefaut, periodes: periodes.length });
 });
 
@@ -98,12 +113,16 @@ app.post('/api/periodes', async (req, res) => {
   verifier(cle(du, duMoment) <= cle(au, auMoment), 'La fin est avant le début');
   verifier(LIEUX.includes(lieu), 'Lieu inconnu');
   verifier(typeof note === 'string', 'Note invalide');
-  const { periodes } = await lire();
-  const ligne = await store.add({ du, duMoment, au, auMoment, lieu, note: note.trim().slice(0, 200), ordre: prochainOrdre() });
-  // Les périodes plus anciennes entièrement recouvertes par la nouvelle ne servent plus à rien : on les retire.
-  const cachees = periodes.filter((p) => cle(p.du, p.duMoment) >= cle(du, duMoment) && cle(p.au, p.auMoment) <= cle(au, auMoment));
-  await Promise.all(cachees.map((p) => store.remove(p.id)));
-  res.json(ligne);
+  const { periodes } = await lire(true);
+  try {
+    const ligne = await store.add({ du, duMoment, au, auMoment, lieu, note: note.trim().slice(0, 200), ordre: prochainOrdre() });
+    // Les périodes plus anciennes entièrement recouvertes par la nouvelle ne servent plus à rien : on les retire.
+    const cachees = periodes.filter((p) => cle(p.du, p.duMoment) >= cle(du, duMoment) && cle(p.au, p.auMoment) <= cle(au, auMoment));
+    await Promise.all(cachees.map((p) => store.remove(p.id)));
+    res.json(ligne);
+  } finally {
+    oublier();
+  }
 });
 
 // Ménage, au plus une fois par jour : les périodes finies depuis plus de 2 mois sont archivées dans Notion.
@@ -113,13 +132,19 @@ async function menage() {
   if (dernierMenage === jour) return;
   dernierMenage = jour;
   const { periodes } = await lire();
-  for (const p of periodes.filter((p) => p.au < ajouterJours(jour, -60))) await store.remove(p.id);
+  const vieilles = periodes.filter((p) => p.au < ajouterJours(jour, -60));
+  for (const p of vieilles) await store.remove(p.id);
+  if (vieilles.length) oublier();
 }
 
 app.delete('/api/periodes/:id', async (req, res) => {
-  const { periodes } = await lire();
+  const { periodes } = await lire(true);
   verifier(periodes.some((p) => p.id === req.params.id), 'Période introuvable');
-  await store.remove(req.params.id);
+  try {
+    await store.remove(req.params.id);
+  } finally {
+    oublier();
+  }
   res.json({ ok: true });
 });
 
@@ -127,10 +152,14 @@ app.delete('/api/periodes/:id', async (req, res) => {
 app.put('/api/reglages', async (req, res) => {
   const lieu = req.body?.lieuParDefaut;
   verifier(LIEUX.includes(lieu), 'Lieu inconnu');
-  const { reglage } = await lire();
+  const { reglage } = await lire(true);
   const ligne = { note: 'Lieu par défaut', lieu, ordre: prochainOrdre() };
-  if (reglage) await store.update(reglage.id, ligne);
-  else await store.add(ligne);
+  try {
+    if (reglage) await store.update(reglage.id, ligne);
+    else await store.add(ligne);
+  } finally {
+    oublier();
+  }
   res.json({ lieuParDefaut: lieu });
 });
 
